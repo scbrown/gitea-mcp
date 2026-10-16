@@ -40,7 +40,7 @@ func NewClient(token string) (*gitea.Client, error) {
 	}
 
 	httpClient := &http.Client{
-		Transport:     sharedTransport(),
+		Transport:     readRetryTransport{base: sharedTransport()},
 		CheckRedirect: checkRedirect,
 	}
 	opts := []gitea.ClientOption{

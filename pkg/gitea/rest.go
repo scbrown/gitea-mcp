@@ -59,7 +59,7 @@ var (
 func restHTTPClient() *http.Client {
 	restClientOnce.Do(func() {
 		restClient = &http.Client{
-			Transport:     sharedTransport(),
+			Transport:     readRetryTransport{base: sharedTransport()},
 			Timeout:       httpClientTimeout,
 			CheckRedirect: checkRedirect,
 		}

@@ -243,3 +243,18 @@ do not grant permissions, enable automatic retries, or replace policy checks.
 Their presence alone does not establish native hook firing or error-rate
 coverage; validate the installed harness separately. Server-side aliases and
 argument guidance also work without Desire Path interception.
+
+### Pull request reliability
+
+The client retries one HTTP 502, 503, or 504 response for a bodyless GET or HEAD
+request, after 250 ms and only while the caller context remains active. It does
+not retry writes, transport errors, HTTP 500, authorization failures, conflicts,
+or rate limits. Existing request deadlines remain in force; a timed-out write
+can have committed and needs reconciliation before another attempt.
+
+For branch updates, the exact Forgejo HTTP 500 message
+`HeadBranch of PR N is up to date` for the requested PR becomes a successful
+`changed: false` result. Other errors retain their response text, including
+server-provided Git stderr. Empty or mismatched PR objects are rejected before
+attachment or status processing. This does not repair server-side Git locks or
+storage stalls, and is not a diagnosis of historical panics.

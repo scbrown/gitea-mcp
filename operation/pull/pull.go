@@ -2,7 +2,10 @@ package pull
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
 
@@ -292,6 +295,10 @@ func getPullRequestByIndexFn(ctx context.Context, args map[string]any) (*mcp.Cal
 	pr, _, err := client.PullRequests.GetPullRequest(ctx, owner, repo, index)
 	if err != nil {
 		return to.ErrorResult(fmt.Errorf("get %v/%v/pr/%v err: %v", owner, repo, index, err))
+	}
+
+	if pr == nil || pr.Index != index {
+		return to.ErrorResult(fmt.Errorf("get %v/%v/pr/%v returned an empty or mismatched pull request", owner, repo, index))
 	}
 
 	// /pulls/{n} omits `assets`; PRs are issues internally, so the issue
@@ -1025,9 +1032,20 @@ func updatePullRequestBranchFn(ctx context.Context, args map[string]any) (*mcp.C
 
 	path := fmt.Sprintf("repos/%s/%s/pulls/%d/update", url.PathEscape(owner), url.PathEscape(repo), index)
 	if _, err := gitea.DoJSON(ctx, "POST", path, nil, nil, nil); err != nil {
+		// Forgejo 15 reports this exact no-op as HTTP 500. Match the typed
+		// response and this PR only; arbitrary errors must remain errors.
+		var response *gitea.HTTPError
+		var body struct {
+			Message string `json:"message"`
+		}
+		if errors.As(err, &response) && response.StatusCode == http.StatusInternalServerError &&
+			json.Unmarshal([]byte(response.Body), &body) == nil &&
+			body.Message == fmt.Sprintf("HeadBranch of PR %d is up to date", index) {
+			return to.TextResult(map[string]any{"message": "branch is already up to date", "changed": false})
+		}
 		return to.ErrorResult(fmt.Errorf("update %v/%v/pr/%v branch err: %v", owner, repo, index, err))
 	}
-	return to.TextResult(map[string]any{"message": "branch updated from base"})
+	return to.TextResult(map[string]any{"message": "branch updated from base", "changed": true})
 }
 
 func getPullRequestFilesFn(ctx context.Context, args map[string]any) (*mcp.CallToolResult, error) {
@@ -1078,7 +1096,7 @@ func getPullRequestStatusFn(ctx context.Context, args map[string]any) (*mcp.Call
 	if err != nil {
 		return to.ErrorResult(fmt.Errorf("get %v/%v/pr/%v err: %v", owner, repo, index, err))
 	}
-	if pr.Head == nil || pr.Head.Sha == "" {
+	if pr == nil || pr.Index != index || pr.Head == nil || pr.Head.Sha == "" {
 		return to.ErrorResult(fmt.Errorf("pr %v/%v/%v has no head SHA", owner, repo, index))
 	}
 
