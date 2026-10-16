@@ -197,6 +197,16 @@ Once configured, try `list all my repositories` in the chat box.
 
 > **Note:** Several tools are consolidated, action-based tools, a single tool exposes multiple operations through a `method` parameter. Tools with `Write` access are hidden when the server runs in read-only mode (`-r` / `GITEA_READONLY`), and the exposed tool set can be filtered by scope with `-S` / `--scope` (`GITEA_SCOPES`) and/or by individual tool name with `-O` / `--tools` (`GITEA_TOOLS`).
 
+For Forgejo 15, add `--actions-profile forgejo-15`. This opt-in profile advertises
+only `list_runs` and `get_run` on `actions_run_read`, and `dispatch_workflow` on
+`actions_run_write`, matching the Forgejo 15 published API. Job, log, artifact,
+cancel and rerun methods are omitted from these method enums; stale calls are
+rejected before sending an HTTP request. Use the instance's supported Actions
+UI or task/log interface for those operations. The profile does not grant
+permissions or discover capabilities automatically. Recheck the served API
+before selecting a different profile after an upgrade. The default `gitea`
+profile retains the existing Gitea tool surface. Unknown profiles fail startup.
+
 With neither flag set, every tool loads. `--scope` limits loading to tools whose Scope column value is in the given list; `--tools` limits loading to the named tools; setting both loads the union of the selected scopes and the individually named tools. Unknown scope names are ignored with a startup warning.
 
 ```bash

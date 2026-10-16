@@ -69,6 +69,9 @@ func runReadFn(ctx context.Context, args map[string]any) (*mcp.CallToolResult, e
 	if err != nil {
 		return to.ErrorResult(err)
 	}
+	if err := checkProfileMethod(method); err != nil {
+		return to.ErrorResult(err)
+	}
 	switch method {
 	case "list_workflows":
 		return listRepoActionWorkflowsFn(ctx, args)
@@ -104,6 +107,9 @@ func runReadFn(ctx context.Context, args map[string]any) (*mcp.CallToolResult, e
 func runWriteFn(ctx context.Context, args map[string]any) (*mcp.CallToolResult, error) {
 	method, err := params.GetString(args, "method")
 	if err != nil {
+		return to.ErrorResult(err)
+	}
+	if err := checkProfileMethod(method); err != nil {
 		return to.ErrorResult(err)
 	}
 	switch method {

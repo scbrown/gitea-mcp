@@ -12,6 +12,7 @@ import (
 	"text/tabwriter"
 
 	"gitea.com/gitea/gitea-mcp/operation"
+	"gitea.com/gitea/gitea-mcp/operation/actions"
 	flagPkg "gitea.com/gitea/gitea-mcp/pkg/flag"
 	"gitea.com/gitea/gitea-mcp/pkg/log"
 )
@@ -50,6 +51,7 @@ func initFlagSet(fs *flag.FlagSet, args []string, getenv func(string) string, re
 	defaultScopes := getenv("GITEA_SCOPES")
 	fs.StringVar(&scopes, "S", defaultScopes, "")
 	fs.StringVar(&scopes, "scope", defaultScopes, "")
+	fs.StringVar(&flagPkg.ActionsProfile, "actions-profile", "gitea", "Actions API profile: gitea or forgejo-15")
 	fs.BoolVar(&flagPkg.Debug, "d", false, "")
 	fs.BoolVar(&flagPkg.Debug, "debug", false, "")
 	fs.BoolVar(&flagPkg.Insecure, "k", false, "")
@@ -81,6 +83,7 @@ func initFlagSet(fs *flag.FlagSet, args []string, getenv func(string) string, re
 		fmt.Fprintf(w, "  -r, -read-only\tExpose only read-only tools\n")
 		fmt.Fprintf(w, "  -O, -tools <names>\tComma-separated list of tool names to expose\n")
 		fmt.Fprintf(w, "  -S, -scope <names>\tComma-separated list of tool scopes to expose\n")
+		fmt.Fprintf(w, "  -actions-profile <name>\tActions API profile: gitea (default) or forgejo-15\n")
 		fmt.Fprintf(w, "  -d, -debug\tEnable debug mode\n")
 		fmt.Fprintf(w, "  -k, -insecure\tIgnore TLS certificate errors\n")
 		fmt.Fprintf(w, "  -max-inline-attachment-bytes <bytes>\tInline image attachments up to this size (default: 5242880)\n")
@@ -194,6 +197,11 @@ func Execute() {
 		} else {
 			osExit(1)
 		}
+		return
+	}
+	if err := actions.ConfigureProfile(flagPkg.ActionsProfile); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		osExit(1)
 		return
 	}
 	if err := operation.Run(); err != nil {
