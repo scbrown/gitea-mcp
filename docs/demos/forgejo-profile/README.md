@@ -15,3 +15,8 @@ This demonstrates candidate behavior, not an installed service or error-rate rec
 
 This fork starts from the public upstream tag above and retains its MIT license.
 GitHub CI builds and tests source; it does not publish releases or install services.
+
+CI retains a static Linux/amd64 tarball, SHA-256 checksums, build information and
+exact source commit. Release publication selects a successful main-commit artifact;
+PR artifacts are candidate evidence. Publishing a release and installing it are
+separate steps. Neither a source push nor CI artifact upload deploys a service.

@@ -15,3 +15,20 @@ jobs:
           go-version-file: go.mod
       - run: make fmt-check lint test build
       - run: go vet ./...
+      - name: Package verified Linux binary
+        env:
+          CGO_ENABLED: '0'
+          GOOS: linux
+          GOARCH: amd64
+        run: |
+          make build VERSION=1.7.0-forgejo.1
+          mkdir -p dist
+          tar -czf dist/gitea-mcp_Linux_x86_64.tar.gz gitea-mcp
+          sha256sum gitea-mcp dist/gitea-mcp_Linux_x86_64.tar.gz > dist/checksums.txt
+          git rev-parse HEAD > dist/source-commit.txt
+          go version -m gitea-mcp > dist/build-info.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: gitea-mcp-linux-amd64
+          path: dist/
+          if-no-files-found: error
