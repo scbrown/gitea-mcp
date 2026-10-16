@@ -215,3 +215,31 @@ gitea-mcp --scope repository,branch --tools get_me
 ```
 
 Many tools accept `page` and `per_page` for pagination. The maximum effective page size is the Gitea server's `[api].MAX_RESPONSE_ITEMS` setting (default **50**), larger values are silently capped.
+
+### Method guidance and optional correction rules
+
+Multiplexed Actions and pull-request tools describe the required arguments and
+provide one example per method. Missing arguments and unknown methods return
+valid choices and an example before HTTP. Common exact compatibility names are
+accepted: Actions `list`/`list-runs`, `dispatch`, PR `edit`, and PR `list`.
+PR listing actually lists requests; it never guesses a pull number. Under
+`forgejo-15`, jobs remain explicitly unavailable and `in_progress` becomes
+Forgejo's `running` status filter.
+
+[Portable Desire Path rules](docs/forgejo-call-aliases.json) scope corrections to
+the Forgejo tool and parameter and anchor the entire value. First install this
+compatibility build and verify `forgejo-15` discovery plus PR
+`list_pull_requests` support. Then preview and import with the existing `dp` CLI:
+
+```sh
+dp aliases import docs/forgejo-call-aliases.json --dry-run
+dp aliases import docs/forgejo-call-aliases.json
+```
+
+Do not import these rules against the original server: its PR read tool lacks
+listing, and its job methods do not have the Forgejo profile guard. Existing
+rules are skipped by default, without overwriting unrelated corrections. Rules
+do not grant permissions, enable automatic retries, or replace policy checks.
+Their presence alone does not establish native hook firing or error-rate
+coverage; validate the installed harness separately. Server-side aliases and
+argument guidance also work without Desire Path interception.

@@ -3,7 +3,8 @@ package actions
 import (
 	"fmt"
 	"slices"
-	"strings"
+
+	"gitea.com/gitea/gitea-mcp/pkg/tool"
 )
 
 // These opt-in capabilities match the published Forgejo 15 Actions API. A
@@ -44,15 +45,15 @@ func ConfigureProfile(name string) error {
 	ActionsRunReadTool.Description = originalReadDescription
 	ActionsRunWriteTool.Description = originalWriteDescription
 	if name == "forgejo-15" {
-		ActionsRunReadTool.Description = "Read Forgejo 15 Actions runs (list_runs, get_run). Job/log/artifact methods are not available in this API profile."
-		ActionsRunWriteTool.Description = "Dispatch Forgejo 15 Actions workflows. Cancel and rerun methods are not available in this API profile."
+		ActionsRunReadTool.Description = tool.MethodDescription("Read Forgejo 15 Actions runs. Status uses running, not in_progress. Job/log/artifact methods are unavailable.", []tool.MethodSpec{tool.Method("list_runs"), tool.Method("get_run", "run_id")})
+		ActionsRunWriteTool.Description = tool.MethodDescription("Dispatch Forgejo 15 Actions workflows. Supply workflow-defined inputs; cancel and rerun are unavailable.", []tool.MethodSpec{tool.Method("dispatch_workflow", "workflow_id", "ref")})
 	}
 	return nil
 }
 
 func checkProfileMethod(method string) error {
 	if profileName == "forgejo-15" && !slices.Contains(forgejo15Methods, method) {
-		return fmt.Errorf("actions method %q is unavailable in the forgejo-15 API profile; supported methods: %s. No request sent; consult the instance's supported Actions UI or task/log interface", method, strings.Join(forgejo15Methods, ", "))
+		return fmt.Errorf("actions method %q is unavailable in the forgejo-15 API profile; consult the instance's supported Actions UI or task/log interface", method)
 	}
 	return nil
 }
