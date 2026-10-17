@@ -2,7 +2,10 @@ package pull
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
 
@@ -43,12 +46,12 @@ var (
 
 	PullRequestReadTool = tool.NewDefinition(
 		PullRequestReadToolName,
-		"Read pull request: details, diff, changed files, head commit status, reviews, review comments.",
+		tool.MethodDescription("Read pull requests. Listing needs no pull_number; get and detail methods require it.", pullReadMethods),
 		annotation.ReadOnly("Read pull request details"),
-		tool.String("method", tool.Required(), tool.Enum("get", "get_diff", "get_files", "get_status", "get_reviews", "get_review", "get_review_comments")),
+		tool.String("method", tool.Required(), tool.Enum("list_pull_requests", "get", "get_diff", "get_files", "get_status", "get_reviews", "get_review", "get_review_comments")),
 		tool.String("owner", tool.Required(), tool.Description(params.OwnerDesc)),
 		tool.String("repo", tool.Required(), tool.Description(params.RepoDesc)),
-		tool.Number("pull_number", tool.Required()),
+		tool.Number("pull_number", tool.Description("required except for list_pull_requests")),
 		tool.Number("review_id", tool.Description("for 'get_review'; optional for 'get_review_comments', omit to list all")),
 		tool.Boolean("binary", tool.Description("include binary diff")),
 		tool.Number("page", tool.Description(params.PageDesc), tool.Default(1)),
@@ -57,7 +60,7 @@ var (
 
 	PullRequestWriteTool = tool.NewDefinition(
 		PullRequestWriteToolName,
-		"Write pull requests: create, update, close, reopen, merge, update branch from base, manage reviewers.",
+		tool.MethodDescription("Write pull requests: create, update, close, reopen, merge, update branch from base, manage reviewers.", pullWriteMethods),
 		annotation.Write("Create, update, close, reopen, or merge pull requests"),
 		tool.String("method", tool.Required(), tool.Enum("create", "update", "close", "reopen", "merge", "update_branch", "add_reviewers", "remove_reviewers")),
 		tool.String("owner", tool.Required(), tool.Description(params.OwnerDesc)),
@@ -132,11 +135,14 @@ func init() {
 }
 
 func pullRequestReadFn(ctx context.Context, args map[string]any) (*mcp.CallToolResult, error) {
-	method, err := params.GetString(args, "method")
+	args = tool.ResolveMethodAliases(args, map[string]string{"list": "list_pull_requests"})
+	method, err := tool.ValidateMethodCall(PullRequestReadTool, args, pullReadMethods)
 	if err != nil {
 		return to.ErrorResult(err)
 	}
 	switch method {
+	case "list_pull_requests":
+		return listRepoPullRequestsFn(ctx, args)
 	case "get":
 		return getPullRequestByIndexFn(ctx, args)
 	case "get_diff":
@@ -157,7 +163,8 @@ func pullRequestReadFn(ctx context.Context, args map[string]any) (*mcp.CallToolR
 }
 
 func pullRequestWriteFn(ctx context.Context, args map[string]any) (*mcp.CallToolResult, error) {
-	method, err := params.GetString(args, "method")
+	args = tool.ResolveMethodAliases(args, map[string]string{"edit": "update"})
+	method, err := tool.ValidateMethodCall(PullRequestWriteTool, args, pullWriteMethods)
 	if err != nil {
 		return to.ErrorResult(err)
 	}
@@ -288,6 +295,10 @@ func getPullRequestByIndexFn(ctx context.Context, args map[string]any) (*mcp.Cal
 	pr, _, err := client.PullRequests.GetPullRequest(ctx, owner, repo, index)
 	if err != nil {
 		return to.ErrorResult(fmt.Errorf("get %v/%v/pr/%v err: %v", owner, repo, index, err))
+	}
+
+	if pr == nil || pr.Index != index {
+		return to.ErrorResult(fmt.Errorf("get %v/%v/pr/%v returned an empty or mismatched pull request", owner, repo, index))
 	}
 
 	// /pulls/{n} omits `assets`; PRs are issues internally, so the issue
@@ -1021,9 +1032,20 @@ func updatePullRequestBranchFn(ctx context.Context, args map[string]any) (*mcp.C
 
 	path := fmt.Sprintf("repos/%s/%s/pulls/%d/update", url.PathEscape(owner), url.PathEscape(repo), index)
 	if _, err := gitea.DoJSON(ctx, "POST", path, nil, nil, nil); err != nil {
+		// Forgejo 15 reports this exact no-op as HTTP 500. Match the typed
+		// response and this PR only; arbitrary errors must remain errors.
+		var response *gitea.HTTPError
+		var body struct {
+			Message string `json:"message"`
+		}
+		if errors.As(err, &response) && response.StatusCode == http.StatusInternalServerError &&
+			json.Unmarshal([]byte(response.Body), &body) == nil &&
+			body.Message == fmt.Sprintf("HeadBranch of PR %d is up to date", index) {
+			return to.TextResult(map[string]any{"message": "branch is already up to date", "changed": false})
+		}
 		return to.ErrorResult(fmt.Errorf("update %v/%v/pr/%v branch err: %v", owner, repo, index, err))
 	}
-	return to.TextResult(map[string]any{"message": "branch updated from base"})
+	return to.TextResult(map[string]any{"message": "branch updated from base", "changed": true})
 }
 
 func getPullRequestFilesFn(ctx context.Context, args map[string]any) (*mcp.CallToolResult, error) {
@@ -1074,7 +1096,7 @@ func getPullRequestStatusFn(ctx context.Context, args map[string]any) (*mcp.Call
 	if err != nil {
 		return to.ErrorResult(fmt.Errorf("get %v/%v/pr/%v err: %v", owner, repo, index, err))
 	}
-	if pr.Head == nil || pr.Head.Sha == "" {
+	if pr == nil || pr.Index != index || pr.Head == nil || pr.Head.Sha == "" {
 		return to.ErrorResult(fmt.Errorf("pr %v/%v/%v has no head SHA", owner, repo, index))
 	}
 

@@ -1,0 +1,43 @@
+Script started on 2026-10-16 15:49:26-04:00 [COMMAND="python3 demo.py ./before ./after" <not executed on terminal>]
+{
+  "profile": "original v1.7.0",
+  "methods": {
+    "actions_run_read": [
+      "list_workflows",
+      "get_workflow",
+      "list_runs",
+      "get_run",
+      "list_jobs",
+      "list_run_jobs",
+      "get_job",
+      "get_job_log_preview",
+      "download_job_log",
+      "list_artifacts",
+      "list_run_artifacts",
+      "get_artifact",
+      "download_artifact"
+    ],
+    "actions_run_write": [
+      "dispatch_workflow",
+      "cancel_run",
+      "rerun_run"
+    ]
+  }
+}
+{
+  "profile": "forgejo-15",
+  "methods": {
+    "actions_run_read": [
+      "list_runs",
+      "get_run"
+    ],
+    "actions_run_write": [
+      "dispatch_workflow"
+    ]
+  }
+}
+list_run_jobs: actions method "list_run_jobs" is unavailable in the forgejo-15 API profile; supported methods: list_runs, get_run, dispatch_workflow. No request sent; consult the instance's supported Actions UI or task/log interface
+get_job_log_preview: actions method "get_job_log_preview" is unavailable in the forgejo-15 API profile; supported methods: list_runs, get_run, dispatch_workflow. No request sent; consult the instance's supported Actions UI or task/log interface
+rerun_run: actions method "rerun_run" is unavailable in the forgejo-15 API profile; supported methods: list_runs, get_run, dispatch_workflow. No request sent; consult the instance's supported Actions UI or task/log interface
+
+Script done on 2026-10-16 15:49:26-04:00 [COMMAND_EXIT_CODE="0"]

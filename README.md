@@ -197,6 +197,16 @@ Once configured, try `list all my repositories` in the chat box.
 
 > **Note:** Several tools are consolidated, action-based tools, a single tool exposes multiple operations through a `method` parameter. Tools with `Write` access are hidden when the server runs in read-only mode (`-r` / `GITEA_READONLY`), and the exposed tool set can be filtered by scope with `-S` / `--scope` (`GITEA_SCOPES`) and/or by individual tool name with `-O` / `--tools` (`GITEA_TOOLS`).
 
+For Forgejo 15, add `--actions-profile forgejo-15`. This opt-in profile advertises
+only `list_runs` and `get_run` on `actions_run_read`, and `dispatch_workflow` on
+`actions_run_write`, matching the Forgejo 15 published API. Job, log, artifact,
+cancel and rerun methods are omitted from these method enums; stale calls are
+rejected before sending an HTTP request. Use the instance's supported Actions
+UI or task/log interface for those operations. The profile does not grant
+permissions or discover capabilities automatically. Recheck the served API
+before selecting a different profile after an upgrade. The default `gitea`
+profile retains the existing Gitea tool surface. Unknown profiles fail startup.
+
 With neither flag set, every tool loads. `--scope` limits loading to tools whose Scope column value is in the given list; `--tools` limits loading to the named tools; setting both loads the union of the selected scopes and the individually named tools. Unknown scope names are ignored with a startup warning.
 
 ```bash
@@ -205,3 +215,46 @@ gitea-mcp --scope repository,branch --tools get_me
 ```
 
 Many tools accept `page` and `per_page` for pagination. The maximum effective page size is the Gitea server's `[api].MAX_RESPONSE_ITEMS` setting (default **50**), larger values are silently capped.
+
+### Method guidance and optional correction rules
+
+Multiplexed Actions and pull-request tools describe the required arguments and
+provide one example per method. Missing arguments and unknown methods return
+valid choices and an example before HTTP. Common exact compatibility names are
+accepted: Actions `list`/`list-runs`, `dispatch`, PR `edit`, and PR `list`.
+PR listing actually lists requests; it never guesses a pull number. Under
+`forgejo-15`, jobs remain explicitly unavailable and `in_progress` becomes
+Forgejo's `running` status filter.
+
+[Portable Desire Path rules](docs/forgejo-call-aliases.json) scope corrections to
+the Forgejo tool and parameter and anchor the entire value. First install this
+compatibility build and verify `forgejo-15` discovery plus PR
+`list_pull_requests` support. Then preview and import with the existing `dp` CLI:
+
+```sh
+dp aliases import docs/forgejo-call-aliases.json --dry-run
+dp aliases import docs/forgejo-call-aliases.json
+```
+
+Do not import these rules against the original server: its PR read tool lacks
+listing, and its job methods do not have the Forgejo profile guard. Existing
+rules are skipped by default, without overwriting unrelated corrections. Rules
+do not grant permissions, enable automatic retries, or replace policy checks.
+Their presence alone does not establish native hook firing or error-rate
+coverage; validate the installed harness separately. Server-side aliases and
+argument guidance also work without Desire Path interception.
+
+### Pull request reliability
+
+The client retries one HTTP 502, 503, or 504 response for a bodyless GET or HEAD
+request, after 250 ms and only while the caller context remains active. It does
+not retry writes, transport errors, HTTP 500, authorization failures, conflicts,
+or rate limits. Existing request deadlines remain in force; a timed-out write
+can have committed and needs reconciliation before another attempt.
+
+For branch updates, the exact Forgejo HTTP 500 message
+`HeadBranch of PR N is up to date` for the requested PR becomes a successful
+`changed: false` result. Other errors retain their response text, including
+server-provided Git stderr. Empty or mismatched PR objects are rejected before
+attachment or status processing. This does not repair server-side Git locks or
+storage stalls, and is not a diagnosis of historical panics.

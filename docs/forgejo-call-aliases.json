@@ -1,0 +1,60 @@
+{
+  "meta": {
+    "version": 1,
+    "name": "forgejo-call-shapes",
+    "description": "For the compatibility fork with forgejo-15 profile and pull_request_read list_pull_requests support; import only after verifying that server version and discovery.",
+    "author": "scbrown",
+    "count": 7
+  },
+  "aliases": [
+    {
+      "from": "^jobs$",
+      "to": "list_jobs",
+      "tool": "mcp__forgejo__actions_run_read",
+      "param": "method",
+      "match_kind": "regex"
+    },
+    {
+      "from": "^list$",
+      "to": "list_runs",
+      "tool": "mcp__forgejo__actions_run_read",
+      "param": "method",
+      "match_kind": "regex"
+    },
+    {
+      "from": "^list-runs$",
+      "to": "list_runs",
+      "tool": "mcp__forgejo__actions_run_read",
+      "param": "method",
+      "match_kind": "regex"
+    },
+    {
+      "from": "^in_progress$",
+      "to": "running",
+      "tool": "mcp__forgejo__actions_run_read",
+      "param": "status",
+      "match_kind": "regex"
+    },
+    {
+      "from": "^dispatch$",
+      "to": "dispatch_workflow",
+      "tool": "mcp__forgejo__actions_run_write",
+      "param": "method",
+      "match_kind": "regex"
+    },
+    {
+      "from": "^list$",
+      "to": "list_pull_requests",
+      "tool": "mcp__forgejo__pull_request_read",
+      "param": "method",
+      "match_kind": "regex"
+    },
+    {
+      "from": "^edit$",
+      "to": "update",
+      "tool": "mcp__forgejo__pull_request_write",
+      "param": "method",
+      "match_kind": "regex"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+Script started on 2026-10-16 17:44:34-04:00 [COMMAND="python3 demo.py ./before ./after" <not executed on terminal>]
+BASELINE
+{"case": "up-to-date", "error": true, "response": "update example/demo/pr/7 branch err: request failed with status 500: {\"message\": \"HeadBranch of PR 7 is up to date\"}", "fixture_requests": 1, "writes": 1}
+{"case": "git-stderr", "error": true, "response": "update example/demo/pr/7 branch err: request failed with status 500: {\"message\": \"exit status 128: fixture lock exists\"}", "fixture_requests": 1, "writes": 1}
+{"case": "write-gateway", "error": true, "response": "update example/demo/pr/7 branch err: request failed with status 503: {\"message\": \"fixture gateway unavailable\"}", "fixture_requests": 1, "writes": 1}
+{"case": "null-read", "error": false, "response": "{\"body\":\"\",\"closed_at\":null,\"comments\":0,\"created_at\":null,\"draft\":false,\"html_url\":\"\",\"labels\":null,\"mergeable\":false,\"merged\":false,\"number\":0,\"state\":\"\",\"title\":\"\",\"updated_at\":null,\"user\":\"\"}", "fixture_requests": 2, "writes": 0}
+{"case": "transient-read", "error": true, "response": "get example/demo/pr/7 err: fixture gateway unavailable", "fixture_requests": 1, "writes": 0}
+{"case": "valid-read", "error": false, "response": "{\"body\":\"\",\"closed_at\":null,\"comments\":0,\"created_at\":null,\"draft\":false,\"html_url\":\"\",\"labels\":null,\"mergeable\":false,\"merged\":false,\"number\":7,\"state\":\"open\",\"title\":\"fixture\",\"updated_at\":null,\"user\":\"\"}", "fixture_requests": 2, "writes": 0}
+CANDIDATE
+{"case": "up-to-date", "error": false, "response": "{\"changed\":false,\"message\":\"branch is already up to date\"}", "fixture_requests": 1, "writes": 1}
+{"case": "git-stderr", "error": true, "response": "update example/demo/pr/7 branch err: request failed with status 500: {\"message\": \"exit status 128: fixture lock exists\"}", "fixture_requests": 1, "writes": 1}
+{"case": "write-gateway", "error": true, "response": "update example/demo/pr/7 branch err: request failed with status 503: {\"message\": \"fixture gateway unavailable\"}", "fixture_requests": 1, "writes": 1}
+{"case": "null-read", "error": true, "response": "get example/demo/pr/7 returned an empty or mismatched pull request", "fixture_requests": 1, "writes": 0}
+{"case": "transient-read", "error": false, "response": "{\"body\":\"\",\"closed_at\":null,\"comments\":0,\"created_at\":null,\"draft\":false,\"html_url\":\"\",\"labels\":null,\"mergeable\":false,\"merged\":false,\"number\":7,\"state\":\"open\",\"title\":\"fixture\",\"updated_at\":null,\"user\":\"\"}", "fixture_requests": 3, "writes": 0}
+{"case": "valid-read", "error": false, "response": "{\"body\":\"\",\"closed_at\":null,\"comments\":0,\"created_at\":null,\"draft\":false,\"html_url\":\"\",\"labels\":null,\"mergeable\":false,\"merged\":false,\"number\":7,\"state\":\"open\",\"title\":\"fixture\",\"updated_at\":null,\"user\":\"\"}", "fixture_requests": 2, "writes": 0}
+
+Script done on 2026-10-16 17:44:35-04:00 [COMMAND_EXIT_CODE="0"]

@@ -27,7 +27,7 @@ const (
 var (
 	ActionsRunReadTool = tool.NewDefinition(
 		ActionsRunReadToolName,
-		"Read Actions workflows, runs, jobs, logs, and artifacts.",
+		tool.MethodDescription("Read Actions workflows, runs, jobs, logs, and artifacts.", runReadMethods),
 		annotation.ReadOnly("Read Actions workflow, run, job, and artifact data"),
 		tool.String("method", tool.Required(), tool.Enum("list_workflows", "get_workflow", "list_runs", "get_run", "list_jobs", "list_run_jobs", "get_job", "get_job_log_preview", "download_job_log", "list_artifacts", "list_run_artifacts", "get_artifact", "download_artifact")),
 		tool.String("owner", tool.Required(), tool.Description(params.OwnerDesc)),
@@ -47,7 +47,7 @@ var (
 
 	ActionsRunWriteTool = tool.NewDefinition(
 		ActionsRunWriteToolName,
-		"Write Actions runs: dispatch, cancel, rerun.",
+		tool.MethodDescription("Write Actions runs: dispatch, cancel, rerun. Workflow inputs are defined by the selected workflow.", runWriteMethods),
 		annotation.Write("Trigger, cancel, or rerun Actions workflows"),
 		tool.String("method", tool.Required(), tool.Enum("dispatch_workflow", "cancel_run", "rerun_run")),
 		tool.String("owner", tool.Required(), tool.Description(params.OwnerDesc)),
@@ -65,9 +65,18 @@ func init() {
 }
 
 func runReadFn(ctx context.Context, args map[string]any) (*mcp.CallToolResult, error) {
-	method, err := params.GetString(args, "method")
+	args = tool.ResolveMethodAliases(args, map[string]string{"list": "list_runs", "list-runs": "list_runs", "jobs": "list_jobs"})
+	if method, _ := args["method"].(string); method != "" {
+		if err := checkProfileMethod(method); err != nil {
+			return to.ErrorResult(tool.MethodCallError(ActionsRunReadTool, args, runReadMethods, err.Error()))
+		}
+	}
+	method, err := tool.ValidateMethodCall(ActionsRunReadTool, args, runReadMethods)
 	if err != nil {
 		return to.ErrorResult(err)
+	}
+	if profileName == "forgejo-15" && args["status"] == "in_progress" {
+		args["status"] = "running"
 	}
 	switch method {
 	case "list_workflows":
@@ -102,7 +111,13 @@ func runReadFn(ctx context.Context, args map[string]any) (*mcp.CallToolResult, e
 }
 
 func runWriteFn(ctx context.Context, args map[string]any) (*mcp.CallToolResult, error) {
-	method, err := params.GetString(args, "method")
+	args = tool.ResolveMethodAliases(args, map[string]string{"dispatch": "dispatch_workflow"})
+	if method, _ := args["method"].(string); method != "" {
+		if err := checkProfileMethod(method); err != nil {
+			return to.ErrorResult(tool.MethodCallError(ActionsRunWriteTool, args, runWriteMethods, err.Error()))
+		}
+	}
+	method, err := tool.ValidateMethodCall(ActionsRunWriteTool, args, runWriteMethods)
 	if err != nil {
 		return to.ErrorResult(err)
 	}
