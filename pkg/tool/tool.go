@@ -89,10 +89,12 @@ func (t *Tool) Tools() []ServerTool {
 // MCPHandler adapts a project handler to the official SDK's low-level handler.
 func (s ServerTool) MCPHandler() mcp.ToolHandler {
 	return func(ctx context.Context, req *mcp.CallToolRequest) (result *mcp.CallToolResult, err error) {
+		audit := beginCallAudit(s.Tool.Name)
 		defer func() {
 			if recovered := recover(); recovered != nil {
 				result, err = to.ErrorResult(fmt.Errorf("panic recovered in %s tool handler: %v", s.Tool.Name, recovered))
 			}
+			audit.complete(result, err)
 		}()
 
 		arguments, err := decodeArguments(req.Params.Arguments)

@@ -258,3 +258,22 @@ For branch updates, the exact Forgejo HTTP 500 message
 server-provided Git stderr. Empty or mismatched PR objects are rejected before
 attachment or status processing. This does not repair server-side Git locks or
 storage stalls, and is not a diagnosis of historical panics.
+
+### Actions read call audit
+
+Each `actions_run_read` call received by the server emits an info-level
+`tool_call_started` record and, when its handler returns, a
+`tool_call_completed` record. Both carry the tool name and the same opaque
+`call_id`; completion adds `outcome` (`success` or `error`). Protocol errors,
+invalid arguments, tool errors, recovered panics and missing results count as
+errors. These audit records contain no arguments, credentials or error text;
+existing application logs have their own logging behavior.
+
+For a measurement window, retain the complete server log stream, including
+rotations and process boundaries. Count unique start IDs as received calls and
+pair completions by ID. A start without a completion is unfinished or unknown,
+not a successful call; missing logs invalidate coverage. Report both completed
+errors and unmatched starts. Client transport failures before server receipt
+are outside this server-side denominator and need separate client evidence.
+A zero from unrelated health metrics or a hook that never observed the tool
+does not establish a zero error rate.
