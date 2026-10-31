@@ -26,6 +26,7 @@ func TestForgejo15DiscoveryAndStaleCalls(t *testing.T) {
 	}
 
 	var calls atomic.Int32
+	wantPage := "1"
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		calls.Add(1)
 		w.Header().Set("Content-Type", "application/json")
@@ -33,6 +34,12 @@ func TestForgejo15DiscoveryAndStaleCalls(t *testing.T) {
 		case "/api/v1/version":
 			fmt.Fprint(w, `{"version":"1.24.6"}`)
 		case "/api/v1/repos/demo/repo/actions/runs":
+			t.Logf("Actions list request: %s?%s", r.URL.Path, r.URL.RawQuery)
+			if r.URL.Query().Get("page") != wantPage || r.URL.Query().Get("limit") != "30" {
+				t.Errorf("pagination = %s, want page=%s and limit=30", r.URL.RawQuery, wantPage)
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
 			fmt.Fprint(w, `{"total_count":1,"workflow_runs":[{"id":42,"status":"success"}]}`)
 		default:
 			t.Errorf("unexpected request %s %s", r.Method, r.URL.Path)
@@ -67,6 +74,16 @@ func TestForgejo15DiscoveryAndStaleCalls(t *testing.T) {
 	}
 	if calls.Load() == 0 {
 		t.Fatal("positive control sent no request")
+	}
+	for _, page := range []float64{0, -1, 2} {
+		wantPage = "1"
+		if page == 2 {
+			wantPage = "2"
+		}
+		result, err = runReadFn(context.Background(), map[string]any{"method": "list_runs", "owner": "demo", "repo": "repo", "page": page})
+		if err != nil || result.IsError {
+			t.Fatalf("page %v result=%v err=%v", page, result, err)
+		}
 	}
 }
 

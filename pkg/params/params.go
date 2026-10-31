@@ -51,7 +51,8 @@ func GetStringSlice(args map[string]any, key string) []string {
 }
 
 func GetPagination(args map[string]any, defaultPageSize int64) (page, pageSize int) {
-	return int(GetOptionalInt(args, "page", 1)), int(GetOptionalInt(args, "per_page", defaultPageSize))
+	page = max(1, int(GetOptionalInt(args, "page", 1)))
+	return page, int(GetOptionalInt(args, "per_page", defaultPageSize))
 }
 
 // ToInt64 accepts float64 (JSON number) and string representations.

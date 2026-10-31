@@ -14,6 +14,12 @@ func TestGetPagination(t *testing.T) {
 	if page != 1 || perPage != 30 {
 		t.Errorf("GetPagination defaults = (%d, %d), want (1, 30)", page, perPage)
 	}
+	for _, value := range []any{float64(0), float64(-1), "0", "-1"} {
+		page, _ = GetPagination(map[string]any{"page": value}, 30)
+		if page != 1 {
+			t.Errorf("page %v = %d, want 1", value, page)
+		}
+	}
 }
 
 func TestToInt64(t *testing.T) {
