@@ -1,0 +1,22 @@
+Script started on 2026-10-31 17:22:18-04:00 [COMMAND="bash run-demo.sh" <not executed on terminal>]
+BEFORE: Actions read with omitted page and then page=0 (expected refusal)
+=== RUN   TestForgejo15DiscoveryAndStaleCalls
+    profile_test.go:37: Actions list request: /api/v1/repos/demo/repo/actions/runs?limit=30&page=1
+    profile_test.go:37: Actions list request: /api/v1/repos/demo/repo/actions/runs?limit=30&page=0
+    profile_test.go:39: pagination = limit=30&page=0, want page=1 and limit=30
+    profile_test.go:85: page 0 result=&{map[] [0x3f1c90d320c0] <nil> true map[]   0x3f1c90d200d0} err=<nil>
+--- FAIL: TestForgejo15DiscoveryAndStaleCalls (0.00s)
+FAIL
+FAIL	gitea.com/gitea/gitea-mcp/operation/actions	0.003s
+FAIL
+AFTER: omitted/zero/negative page becomes1; explicit page2 remains2
+=== RUN   TestForgejo15DiscoveryAndStaleCalls
+    profile_test.go:37: Actions list request: /api/v1/repos/demo/repo/actions/runs?limit=30&page=1
+    profile_test.go:37: Actions list request: /api/v1/repos/demo/repo/actions/runs?limit=30&page=1
+    profile_test.go:37: Actions list request: /api/v1/repos/demo/repo/actions/runs?limit=30&page=1
+    profile_test.go:37: Actions list request: /api/v1/repos/demo/repo/actions/runs?limit=30&page=2
+--- PASS: TestForgejo15DiscoveryAndStaleCalls (0.00s)
+PASS
+ok  	gitea.com/gitea/gitea-mcp/operation/actions	0.003s
+
+Script done on 2026-10-31 17:22:20-04:00 [COMMAND_EXIT_CODE="0"]
