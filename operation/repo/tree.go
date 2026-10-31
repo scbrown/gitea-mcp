@@ -51,7 +51,10 @@ func GetRepoTreeFn(ctx context.Context, args map[string]any) (*mcp.CallToolResul
 		return to.ErrorResult(err)
 	}
 	recursive, _ := args["recursive"].(bool)
-	page, pageSize := params.GetPagination(args, 30)
+	page, pageSize, err := params.GetPagination(args, 30)
+	if err != nil {
+		return to.ErrorResult(err)
+	}
 
 	opt := gitea_sdk.ListTreeOptions{
 		Page:      page,

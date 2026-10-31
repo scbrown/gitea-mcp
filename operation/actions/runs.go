@@ -159,7 +159,10 @@ func listRepoActionWorkflowsFn(ctx context.Context, args map[string]any) (*mcp.C
 	if err != nil {
 		return to.ErrorResult(err)
 	}
-	page, pageSize := params.GetPagination(args, 30)
+	page, pageSize, err := params.GetPagination(args, 30)
+	if err != nil {
+		return to.ErrorResult(err)
+	}
 	query := url.Values{}
 	query.Set("page", strconv.Itoa(page))
 	query.Set("limit", strconv.Itoa(pageSize))
@@ -262,7 +265,10 @@ func listRepoActionRunsFn(ctx context.Context, args map[string]any) (*mcp.CallTo
 	if err != nil {
 		return to.ErrorResult(err)
 	}
-	page, pageSize := params.GetPagination(args, 30)
+	page, pageSize, err := params.GetPagination(args, 30)
+	if err != nil {
+		return to.ErrorResult(err)
+	}
 	statusFilter, _ := args["status"].(string)
 
 	query := url.Values{}
@@ -378,7 +384,10 @@ func listRepoActionJobsFn(ctx context.Context, args map[string]any) (*mcp.CallTo
 	if err != nil {
 		return to.ErrorResult(err)
 	}
-	page, pageSize := params.GetPagination(args, 30)
+	page, pageSize, err := params.GetPagination(args, 30)
+	if err != nil {
+		return to.ErrorResult(err)
+	}
 	statusFilter, _ := args["status"].(string)
 
 	query := url.Values{}
@@ -414,7 +423,10 @@ func listRepoActionRunJobsFn(ctx context.Context, args map[string]any) (*mcp.Cal
 	if err != nil || runID <= 0 {
 		return to.ErrorResult(errors.New("run_id is required"))
 	}
-	page, pageSize := params.GetPagination(args, 30)
+	page, pageSize, err := params.GetPagination(args, 30)
+	if err != nil {
+		return to.ErrorResult(err)
+	}
 
 	query := url.Values{}
 	query.Set("page", strconv.Itoa(page))

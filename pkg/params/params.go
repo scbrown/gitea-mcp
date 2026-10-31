@@ -1,7 +1,9 @@
 package params
 
 import (
+	"errors"
 	"fmt"
+	"math"
 	"strconv"
 	"time"
 )
@@ -50,8 +52,26 @@ func GetStringSlice(args map[string]any, key string) []string {
 	return out
 }
 
-func GetPagination(args map[string]any, defaultPageSize int64) (page, pageSize int) {
-	return int(GetOptionalInt(args, "page", 1)), int(GetOptionalInt(args, "per_page", defaultPageSize))
+func GetPagination(args map[string]any, defaultPageSize int64) (page, pageSize int, err error) {
+	page = 1
+	if value, exists := args["page"]; exists {
+		switch value := value.(type) {
+		case float64:
+			if math.IsNaN(value) || math.IsInf(value, 0) || value < 1 || math.Trunc(value) != value || value >= math.Ldexp(1, strconv.IntSize-1) {
+				return 0, 0, errors.New("page must be a positive integer")
+			}
+			page = int(value)
+		case string:
+			parsed, parseErr := strconv.ParseInt(value, 10, strconv.IntSize)
+			if parseErr != nil || parsed < 1 {
+				return 0, 0, errors.New("page must be a positive integer")
+			}
+			page = int(parsed)
+		default:
+			return 0, 0, errors.New("page must be a positive integer")
+		}
+	}
+	return page, int(GetOptionalInt(args, "per_page", defaultPageSize)), nil
 }
 
 // ToInt64 accepts float64 (JSON number) and string representations.

@@ -100,7 +100,10 @@ func UsersFn(ctx context.Context, args map[string]any) (*mcp.CallToolResult, err
 	if err != nil {
 		return to.ErrorResult(err)
 	}
-	page, pageSize := params.GetPagination(args, 30)
+	page, pageSize, err := params.GetPagination(args, 30)
+	if err != nil {
+		return to.ErrorResult(err)
+	}
 	opt := gitea_sdk.SearchUsersOption{
 		KeyWord:  keyword,
 		Page:     page,
@@ -127,7 +130,10 @@ func OrgTeamsFn(ctx context.Context, args map[string]any) (*mcp.CallToolResult, 
 		return to.ErrorResult(err)
 	}
 	includeDescription, _ := args["includeDescription"].(bool)
-	page, pageSize := params.GetPagination(args, 30)
+	page, pageSize, err := params.GetPagination(args, 30)
+	if err != nil {
+		return to.ErrorResult(err)
+	}
 	opt := gitea_sdk.SearchTeamsOptions{
 		Query:              query,
 		IncludeDescription: includeDescription,
@@ -154,7 +160,10 @@ func ReposFn(ctx context.Context, args map[string]any) (*mcp.CallToolResult, err
 	keywordInDescription, _ := args["keywordInDescription"].(bool)
 	sort, _ := args["sort"].(string)
 	order, _ := args["order"].(string)
-	page, pageSize := params.GetPagination(args, 30)
+	page, pageSize, err := params.GetPagination(args, 30)
+	if err != nil {
+		return to.ErrorResult(err)
+	}
 	opt := gitea_sdk.SearchRepoOptions{
 		Keyword:              keyword,
 		KeywordIsTopic:       keywordIsTopic,
@@ -183,7 +192,10 @@ func IssuesFn(ctx context.Context, args map[string]any) (*mcp.CallToolResult, er
 	if err != nil {
 		return to.ErrorResult(err)
 	}
-	page, pageSize := params.GetPagination(args, 30)
+	page, pageSize, err := params.GetPagination(args, 30)
+	if err != nil {
+		return to.ErrorResult(err)
+	}
 
 	opt := gitea_sdk.ListIssueOption{
 		KeyWord:  query,

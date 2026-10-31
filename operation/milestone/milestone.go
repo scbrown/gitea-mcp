@@ -132,7 +132,10 @@ func listMilestonesFn(ctx context.Context, args map[string]any) (*mcp.CallToolRe
 	}
 	state := params.GetOptionalString(args, "state", "all")
 	name := params.GetOptionalString(args, "name", "")
-	page, pageSize := params.GetPagination(args, 30)
+	page, pageSize, err := params.GetPagination(args, 30)
+	if err != nil {
+		return to.ErrorResult(err)
+	}
 	opt := gitea_sdk.ListMilestoneOption{
 		State:    gitea_sdk.StateType(state),
 		Name:     name,
