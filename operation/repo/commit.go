@@ -65,7 +65,10 @@ func ListRepoCommitsFn(ctx context.Context, args map[string]any) (*mcp.CallToolR
 	if err != nil {
 		return to.ErrorResult(err)
 	}
-	page, pageSize := params.GetPagination(args, 30)
+	page, pageSize, err := params.GetPagination(args, 30)
+	if err != nil {
+		return to.ErrorResult(err)
+	}
 	sha, _ := args["sha"].(string)
 	path, _ := args["path"].(string)
 	opt := gitea_sdk.ListCommitOptions{

@@ -118,7 +118,10 @@ func listPackagesFn(ctx context.Context, args map[string]any) (*mcp.CallToolResu
 	if q, ok := args["q"].(string); ok && q != "" {
 		query.Set("q", q)
 	}
-	page, pageSize := params.GetPagination(args, 30)
+	page, pageSize, err := params.GetPagination(args, 30)
+	if err != nil {
+		return to.ErrorResult(err)
+	}
 	query.Set("page", strconv.Itoa(page))
 	query.Set("limit", strconv.Itoa(pageSize))
 
@@ -146,7 +149,10 @@ func listPackageVersionsFn(ctx context.Context, args map[string]any) (*mcp.CallT
 	}
 
 	query := url.Values{}
-	page, pageSize := params.GetPagination(args, 30)
+	page, pageSize, err := params.GetPagination(args, 30)
+	if err != nil {
+		return to.ErrorResult(err)
+	}
 	query.Set("page", strconv.Itoa(page))
 	query.Set("limit", strconv.Itoa(pageSize))
 

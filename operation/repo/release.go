@@ -229,7 +229,10 @@ func ListReleasesFn(ctx context.Context, args map[string]any) (*mcp.CallToolResu
 	if err != nil {
 		return to.ErrorResult(err)
 	}
-	page, pageSize := params.GetPagination(args, 20)
+	page, pageSize, err := params.GetPagination(args, 20)
+	if err != nil {
+		return to.ErrorResult(err)
+	}
 
 	client, err := gitea.ClientFromContext(ctx)
 	if err != nil {

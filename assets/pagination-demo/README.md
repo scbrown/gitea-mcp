@@ -1,32 +1,34 @@
-# Actions pagination: actual requests before and after
+# Invalid pages: reject before HTTP
 
-The focused reproducer calls the Actions read handler against a local HTTP
-fixture that requires a positive page. With the parser from base
-`8ad2fb3ccbf59c623098e073ea43202beceee4b4`, omitted page sends 1 but explicit
-zero sends 0 and the receiver refuses it. With this change, omitted, zero and
-negative pages send 1; explicit page 2 still sends 2. The recording prints the
-actual received request URLs, including both the expected baseline failure and
-successful candidate calls. It does not show a production MCP deployment or
-claim that omitted-page production calls were failing.
+The same Actions receiver controls run against two isolated source trees.
+Before: published `f28c56b06c7f2461aa3901a51761617290245a05` plus the current
+receiver test. Its clamp sends page 1 for explicit zero, which fails the zero
+outbound request assertion. After: this introducing repair commit rejects
+explicit zero, negative, malformed, Boolean, fractional, null and overflowing
+pages before HTTP. Omitted page still sends 1; both numeric and string page 2
+send 2. Generic integer and ID parsing keeps its historical behavior.
 
-Source: base above plus the parser and wire controls in this directory's
-introducing commit. Target: isolated HTTP fixture, not a live service. Small
-recording files remain in the repository's assets directory.
+The recording prints actual received URLs and explicit no-request assertions.
+It requires a behavior failure on the baseline and refuses to count a build
+failure as evidence. Both trees use the module's declared Go 1.27 toolchain.
+This is an isolated HTTP fixture, not a production deployment or proof of the
+old seven-day reliability criterion. The earlier clamp behavior and its review
+finding remain in Git history; they are superseded by this rejection contract.
 
-Download `output.log` and `timing.log`, then replay with util-linux:
+Download `output.log` and `timing.log`, then use util-linux:
 
 ```sh
 scriptreplay --log-out output.log --log-timing timing.log
 ```
 
-Replay was checked. `output.log` is the readable transcript; no inline playback
-is claimed. To repeat from the candidate repository root:
+Replay was checked. `output.log` is also a readable transcript; no inline player
+is claimed. These small files stay in the repository's assets directory.
+To reproduce, create an isolated checkout of the exact baseline above, copy the
+candidate's `operation/actions/profile_test.go` into that baseline, then run
+from the candidate root:
 
 ```sh
-git show 8ad2fb3ccbf59c623098e073ea43202beceee4b4:pkg/params/params.go > ../before-params.go
-bash assets/pagination-demo/run.sh
+BASELINE_DIR=/path/to/isolated-baseline bash assets/pagination-demo/run.sh
 ```
 
-The script temporarily substitutes the baseline parser, restores the candidate
-on exit, and requires the baseline refusal before running the candidate. Run in
-an isolated checkout with no concurrent writer.
+The script does not modify either source tree.

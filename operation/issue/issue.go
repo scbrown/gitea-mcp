@@ -182,7 +182,10 @@ func listRepoIssuesFn(ctx context.Context, args map[string]any) (*mcp.CallToolRe
 	}
 	labels := params.GetStringSlice(args, "labels")
 	milestones := params.GetStringSlice(args, "milestones")
-	page, pageSize := params.GetPagination(args, 30)
+	page, pageSize, err := params.GetPagination(args, 30)
+	if err != nil {
+		return to.ErrorResult(err)
+	}
 	opt := gitea_sdk.ListIssueOption{
 		State:      gitea_sdk.StateType(state),
 		Labels:     labels,

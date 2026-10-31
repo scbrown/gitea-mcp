@@ -140,7 +140,10 @@ func listRepoActionSecretsFn(ctx context.Context, args map[string]any) (*mcp.Cal
 	if err != nil {
 		return to.ErrorResult(err)
 	}
-	page, pageSize := params.GetPagination(args, 30)
+	page, pageSize, err := params.GetPagination(args, 30)
+	if err != nil {
+		return to.ErrorResult(err)
+	}
 
 	client, err := gitea.ClientFromContext(ctx)
 	if err != nil {
@@ -220,7 +223,10 @@ func listOrgActionSecretsFn(ctx context.Context, args map[string]any) (*mcp.Call
 	if err != nil {
 		return to.ErrorResult(err)
 	}
-	page, pageSize := params.GetPagination(args, 30)
+	page, pageSize, err := params.GetPagination(args, 30)
+	if err != nil {
+		return to.ErrorResult(err)
+	}
 
 	client, err := gitea.ClientFromContext(ctx)
 	if err != nil {
@@ -294,7 +300,10 @@ func listRepoActionVariablesFn(ctx context.Context, args map[string]any) (*mcp.C
 	if err != nil {
 		return to.ErrorResult(err)
 	}
-	page, pageSize := params.GetPagination(args, 30)
+	page, pageSize, err := params.GetPagination(args, 30)
+	if err != nil {
+		return to.ErrorResult(err)
+	}
 
 	query := url.Values{}
 	query.Set("page", strconv.Itoa(page))
@@ -421,7 +430,10 @@ func listOrgActionVariablesFn(ctx context.Context, args map[string]any) (*mcp.Ca
 	if err != nil {
 		return to.ErrorResult(err)
 	}
-	page, pageSize := params.GetPagination(args, 30)
+	page, pageSize, err := params.GetPagination(args, 30)
+	if err != nil {
+		return to.ErrorResult(err)
+	}
 
 	client, err := gitea.ClientFromContext(ctx)
 	if err != nil {

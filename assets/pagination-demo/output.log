@@ -1,22 +1,36 @@
-Script started on 2026-10-31 17:22:18-04:00 [COMMAND="bash run-demo.sh" <not executed on terminal>]
-BEFORE: Actions read with omitted page and then page=0 (expected refusal)
+Script started on 2026-10-31 18:08:51-04:00 [COMMAND="bash assets/pagination-demo/run.sh" <not executed on terminal>]
+BEFORE: published clamp implementation f28c56b with current receiver controls
 === RUN   TestForgejo15DiscoveryAndStaleCalls
-    profile_test.go:37: Actions list request: /api/v1/repos/demo/repo/actions/runs?limit=30&page=1
-    profile_test.go:37: Actions list request: /api/v1/repos/demo/repo/actions/runs?limit=30&page=0
-    profile_test.go:39: pagination = limit=30&page=0, want page=1 and limit=30
-    profile_test.go:85: page 0 result=&{map[] [0x3f1c90d320c0] <nil> true map[]   0x3f1c90d200d0} err=<nil>
+    profile_test.go:39: Actions list request: /api/v1/repos/demo/repo/actions/runs?limit=30&page=1
+    profile_test.go:39: Actions list request: /api/v1/repos/demo/repo/actions/runs?limit=30&page=2
+    profile_test.go:39: Actions list request: /api/v1/repos/demo/repo/actions/runs?limit=30&page=2
+    profile_test.go:39: Actions list request: /api/v1/repos/demo/repo/actions/runs?limit=30&page=1
+    profile_test.go:41: pagination = limit=30&page=1, want page=2 and limit=30
+    profile_test.go:89: invalid page 0 sent HTTP
 --- FAIL: TestForgejo15DiscoveryAndStaleCalls (0.00s)
 FAIL
 FAIL	gitea.com/gitea/gitea-mcp/operation/actions	0.003s
 FAIL
-AFTER: omitted/zero/negative page becomes1; explicit page2 remains2
+AFTER: invalid explicit pages reject before HTTP; omitted1 and valid2 still send requests
 === RUN   TestForgejo15DiscoveryAndStaleCalls
-    profile_test.go:37: Actions list request: /api/v1/repos/demo/repo/actions/runs?limit=30&page=1
-    profile_test.go:37: Actions list request: /api/v1/repos/demo/repo/actions/runs?limit=30&page=1
-    profile_test.go:37: Actions list request: /api/v1/repos/demo/repo/actions/runs?limit=30&page=1
-    profile_test.go:37: Actions list request: /api/v1/repos/demo/repo/actions/runs?limit=30&page=2
+    profile_test.go:39: Actions list request: /api/v1/repos/demo/repo/actions/runs?limit=30&page=1
+    profile_test.go:39: Actions list request: /api/v1/repos/demo/repo/actions/runs?limit=30&page=2
+    profile_test.go:39: Actions list request: /api/v1/repos/demo/repo/actions/runs?limit=30&page=2
+    profile_test.go:96: Invalid page 0: rejected with zero HTTP requests
+    profile_test.go:96: Invalid page -1: rejected with zero HTTP requests
+    profile_test.go:96: Invalid page 1.5: rejected with zero HTTP requests
+    profile_test.go:96: Invalid page 0: rejected with zero HTTP requests
+    profile_test.go:96: Invalid page -1: rejected with zero HTTP requests
+    profile_test.go:96: Invalid page bad: rejected with zero HTTP requests
+    profile_test.go:96: Invalid page 1.5: rejected with zero HTTP requests
+    profile_test.go:96: Invalid page 9223372036854775808: rejected with zero HTTP requests
+    profile_test.go:96: Invalid page true: rejected with zero HTTP requests
+    profile_test.go:96: Invalid page <nil>: rejected with zero HTTP requests
+    profile_test.go:96: Invalid page NaN: rejected with zero HTTP requests
+    profile_test.go:96: Invalid page +Inf: rejected with zero HTTP requests
+    profile_test.go:96: Invalid page 9.223372036854776e+18: rejected with zero HTTP requests
 --- PASS: TestForgejo15DiscoveryAndStaleCalls (0.00s)
 PASS
-ok  	gitea.com/gitea/gitea-mcp/operation/actions	0.003s
+ok  	gitea.com/gitea/gitea-mcp/operation/actions	0.004s
 
-Script done on 2026-10-31 17:22:20-04:00 [COMMAND_EXIT_CODE="0"]
+Script done on 2026-10-31 18:08:52-04:00 [COMMAND_EXIT_CODE="0"]

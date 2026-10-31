@@ -3,9 +3,11 @@ package actions
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -75,15 +77,23 @@ func TestForgejo15DiscoveryAndStaleCalls(t *testing.T) {
 	if calls.Load() == 0 {
 		t.Fatal("positive control sent no request")
 	}
-	for _, page := range []float64{0, -1, 2} {
-		wantPage = "1"
-		if page == 2 {
-			wantPage = "2"
-		}
+	wantPage = "2"
+	for _, page := range []any{float64(2), "2"} {
 		result, err = runReadFn(context.Background(), map[string]any{"method": "list_runs", "owner": "demo", "repo": "repo", "page": page})
 		if err != nil || result.IsError {
-			t.Fatalf("page %v result=%v err=%v", page, result, err)
+			t.Fatalf("positive page %v result=%v err=%v", page, result, err)
 		}
+	}
+	for _, page := range []any{float64(0), float64(-1), float64(1.5), "0", "-1", "bad", "1.5", "9223372036854775808", true, nil, math.NaN(), math.Inf(1), math.Ldexp(1, strconv.IntSize-1)} {
+		before := calls.Load()
+		result, err = runReadFn(context.Background(), map[string]any{"method": "list_runs", "owner": "demo", "repo": "repo", "page": page})
+		if err != nil || !result.IsError {
+			t.Fatalf("invalid page %v result=%v err=%v", page, result, err)
+		}
+		if calls.Load() != before {
+			t.Fatalf("invalid page %v sent HTTP", page)
+		}
+		t.Logf("Invalid page %v: rejected with zero HTTP requests", page)
 	}
 }
 

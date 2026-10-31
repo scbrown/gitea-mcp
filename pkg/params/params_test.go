@@ -1,23 +1,30 @@
 package params
 
 import (
+	"math"
+	"strconv"
 	"strings"
 	"testing"
 )
 
 func TestGetPagination(t *testing.T) {
-	page, perPage := GetPagination(map[string]any{"page": float64(2), "per_page": float64(40)}, 30)
-	if page != 2 || perPage != 40 {
-		t.Errorf("GetPagination = (%d, %d), want (2, 40)", page, perPage)
+	for _, tt := range []struct {
+		args               map[string]any
+		wantPage, wantSize int
+	}{
+		{map[string]any{}, 1, 30},
+		{map[string]any{"page": float64(2), "per_page": float64(40)}, 2, 40},
+		{map[string]any{"page": "2"}, 2, 30},
+		{map[string]any{"page": "1"}, 1, 30},
+	} {
+		page, size, err := GetPagination(tt.args, 30)
+		if err != nil || page != tt.wantPage || size != tt.wantSize {
+			t.Errorf("GetPagination(%v)=(%d,%d,%v)", tt.args, page, size, err)
+		}
 	}
-	page, perPage = GetPagination(map[string]any{}, 30)
-	if page != 1 || perPage != 30 {
-		t.Errorf("GetPagination defaults = (%d, %d), want (1, 30)", page, perPage)
-	}
-	for _, value := range []any{float64(0), float64(-1), "0", "-1"} {
-		page, _ = GetPagination(map[string]any{"page": value}, 30)
-		if page != 1 {
-			t.Errorf("page %v = %d, want 1", value, page)
+	for _, value := range []any{nil, float64(0), float64(-1), float64(1.5), true, false, "0", "-1", "", "bad", "1.5", " 2", "9223372036854775808", math.NaN(), math.Inf(1), math.Inf(-1), math.Ldexp(1, strconv.IntSize-1)} {
+		if _, _, err := GetPagination(map[string]any{"page": value}, 30); err == nil || err.Error() != "page must be a positive integer" {
+			t.Errorf("invalid page %v error=%v", value, err)
 		}
 	}
 }
@@ -68,6 +75,9 @@ func TestGetOptionalInt(t *testing.T) {
 		{"invalid type", map[string]any{"page": true}, "page", 1, 1},
 		{"zero value", map[string]any{"id": float64(0)}, "id", 99, 0},
 		{"string zero", map[string]any{"id": "0"}, "id", 99, 0},
+		{"negative ID", map[string]any{"id": float64(-1)}, "id", 99, -1},
+		{"fractional ID historical truncation", map[string]any{"id": float64(1.5)}, "id", 99, 1},
+		{"malformed ID historical default", map[string]any{"id": "bad"}, "id", 99, 99},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

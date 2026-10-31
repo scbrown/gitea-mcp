@@ -1,12 +1,19 @@
 #!/bin/bash
 set -euo pipefail
-cp pkg/params/params.go candidate-params.tmp
-trap 'cp candidate-params.tmp pkg/params/params.go; rm -f candidate-params.tmp' EXIT
-cp ../before-params.go pkg/params/params.go
-printf 'BEFORE: Actions read with omitted page and then page=0 (expected refusal)\n'
-if go test -count=1 -v -run '^TestForgejo15DiscoveryAndStaleCalls$' ./operation/actions; then
-  printf 'ERROR: baseline unexpectedly accepted zero page\n'; exit 1
+: "${BASELINE_DIR:?Set BASELINE_DIR to an isolated f28c56b source tree with the current profile_test.go copied in}"
+baseline_output=$(mktemp)
+trap 'rm -f "$baseline_output"' EXIT
+printf 'BEFORE: published clamp implementation f28c56b with current receiver controls\n'
+if (cd "$BASELINE_DIR" && go test -count=1 -v -run '^TestForgejo15DiscoveryAndStaleCalls$' ./operation/actions) > "$baseline_output" 2>&1; then
+  cat "$baseline_output"
+  printf 'ERROR: baseline unexpectedly satisfied rejection controls\n'
+  exit 1
 fi
-cp candidate-params.tmp pkg/params/params.go
-printf 'AFTER: omitted/zero/negative page becomes1; explicit page2 remains2\n'
+cat "$baseline_output"
+grep -F 'sent HTTP' "$baseline_output" >/dev/null
+if grep -F '[build failed]' "$baseline_output" >/dev/null; then
+  printf 'ERROR: a build failure is not a baseline behavior demonstration\n'
+  exit 1
+fi
+printf 'AFTER: invalid explicit pages reject before HTTP; omitted1 and valid2 still send requests\n'
 go test -count=1 -v -run '^TestForgejo15DiscoveryAndStaleCalls$' ./operation/actions

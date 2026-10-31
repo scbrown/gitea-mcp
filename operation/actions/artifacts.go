@@ -37,7 +37,10 @@ func listRepoActionArtifactsFn(ctx context.Context, args map[string]any) (*mcp.C
 	if err != nil {
 		return to.ErrorResult(err)
 	}
-	page, pageSize := params.GetPagination(args, 30)
+	page, pageSize, err := params.GetPagination(args, 30)
+	if err != nil {
+		return to.ErrorResult(err)
+	}
 
 	query := url.Values{}
 	query.Set("page", strconv.Itoa(page))
@@ -72,7 +75,10 @@ func listRepoActionRunArtifactsFn(ctx context.Context, args map[string]any) (*mc
 	if err != nil || runID <= 0 {
 		return to.ErrorResult(errors.New("run_id is required"))
 	}
-	page, pageSize := params.GetPagination(args, 30)
+	page, pageSize, err := params.GetPagination(args, 30)
+	if err != nil {
+		return to.ErrorResult(err)
+	}
 
 	query := url.Values{}
 	query.Set("page", strconv.Itoa(page))

@@ -355,7 +355,10 @@ func listRepoPullRequestsFn(ctx context.Context, args map[string]any) (*mcp.Call
 	state, _ := args["state"].(string)
 	sort := params.GetOptionalString(args, "sort", "recentupdate")
 	milestone := params.GetOptionalInt(args, "milestone", 0)
-	page, pageSize := params.GetPagination(args, 30)
+	page, pageSize, err := params.GetPagination(args, 30)
+	if err != nil {
+		return to.ErrorResult(err)
+	}
 	opt := gitea_sdk.ListPullRequestsOptions{
 		State:     gitea_sdk.StateType(state),
 		Sort:      sort,
@@ -510,7 +513,10 @@ func listPullRequestReviewsFn(ctx context.Context, args map[string]any) (*mcp.Ca
 	if err != nil {
 		return to.ErrorResult(err)
 	}
-	page, pageSize := params.GetPagination(args, 30)
+	page, pageSize, err := params.GetPagination(args, 30)
+	if err != nil {
+		return to.ErrorResult(err)
+	}
 
 	client, err := gitea.ClientFromContext(ctx)
 	if err != nil {
@@ -583,7 +589,10 @@ func listPullRequestReviewCommentsFn(ctx context.Context, args map[string]any) (
 	if reviewID := params.GetOptionalInt(args, "review_id", 0); reviewID != 0 {
 		reviewIDs = append(reviewIDs, reviewID)
 	} else {
-		page, pageSize := params.GetPagination(args, 30)
+		page, pageSize, err := params.GetPagination(args, 30)
+		if err != nil {
+			return to.ErrorResult(err)
+		}
 		reviews, _, err := client.PullRequests.ListPullReviews(ctx, owner, repo, index, gitea_sdk.ListPullReviewsOptions{
 			Page: page, PageSize: pageSize,
 		})
@@ -1061,7 +1070,10 @@ func getPullRequestFilesFn(ctx context.Context, args map[string]any) (*mcp.CallT
 	if err != nil {
 		return to.ErrorResult(err)
 	}
-	page, pageSize := params.GetPagination(args, 30)
+	page, pageSize, err := params.GetPagination(args, 30)
+	if err != nil {
+		return to.ErrorResult(err)
+	}
 	client, err := gitea.ClientFromContext(ctx)
 	if err != nil {
 		return to.ErrorResult(fmt.Errorf("get gitea client err: %v", err))
